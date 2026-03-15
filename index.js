@@ -10,7 +10,7 @@ const CONFIG = {
   ],
   slideDuration: 7000,
   shuffle: false,
-  parallaxStrength: 18,
+  parallaxStrength: 20,
 };
 
 const Slideshow = (() => {
@@ -21,7 +21,6 @@ const Slideshow = (() => {
   const preload = srcs => Promise.allSettled(
     srcs.map(src => new Promise(res => {
       const img = new Image();
-      img.decoding = 'async';
       img.onload = img.onerror = () => res(src);
       img.src = src;
     }))
@@ -30,8 +29,13 @@ const Slideshow = (() => {
   function goTo(index) {
     const prev = current;
     current = (index + slides.length) % slides.length;
-    slides[prev].classList.remove('active');
-    slides[current].classList.add('active');
+
+    slides[prev].style.transition = 'opacity 1.2s ease';
+    slides[prev].style.opacity = '0';
+
+    slides[current].style.transition = 'opacity 1.2s ease';
+    slides[current].style.opacity = '1';
+
     dots[prev]?.classList.remove('active');
     dots[current]?.classList.add('active');
   }
@@ -44,15 +48,14 @@ const Slideshow = (() => {
   async function init() {
     let srcs = [...CONFIG.images];
     if (!srcs.length) { container.style.background = '#111'; return; }
-
     await preload(srcs);
 
     srcs.forEach((src, i) => {
       const img = document.createElement('img');
-      img.src      = src;
-      img.alt      = '';
-      img.loading  = 'eager';
-      img.decoding = 'async';
+      img.src     = src;
+      img.alt     = '';
+      img.loading = 'eager';
+      img.style.opacity = i === 0 ? '1' : '0';
       container.appendChild(img);
       slides.push(img);
 
@@ -64,7 +67,7 @@ const Slideshow = (() => {
       dots.push(dot);
     });
 
-    goTo(0);
+    dots[0]?.classList.add('active');
     startAuto();
   }
 
@@ -72,35 +75,30 @@ const Slideshow = (() => {
 })();
 
 const Parallax = (() => {
-  let targetX = 0, targetY = 0;
-  let currentX = 0, currentY = 0;
-  let rafId = null;
+  let tx = 0, ty = 0;
+  let cx = 0, cy = 0;
 
   function lerp(a, b, t) { return a + (b - a) * t; }
 
-  function onMouseMove(e) {
-    const cx = window.innerWidth  / 2;
-    const cy = window.innerHeight / 2;
-    targetX = ((e.clientX - cx) / cx) * CONFIG.parallaxStrength;
-    targetY = ((e.clientY - cy) / cy) * CONFIG.parallaxStrength;
-  }
+  window.addEventListener('mousemove', e => {
+    const hw = window.innerWidth  / 2;
+    const hh = window.innerHeight / 2;
+    tx = ((e.clientX - hw) / hw) * CONFIG.parallaxStrength;
+    ty = ((e.clientY - hh) / hh) * CONFIG.parallaxStrength;
+  });
 
   function tick() {
-    currentX = lerp(currentX, targetX, 0.06);
-    currentY = lerp(currentY, targetY, 0.06);
+    cx = lerp(cx, tx, 0.05);
+    cy = lerp(cy, ty, 0.05);
 
-    const imgs = document.querySelectorAll('#slideshow img');
-    imgs.forEach(img => {
-      img.style.transform = `translate(${-currentX}px, ${-currentY}px)`;
+    document.querySelectorAll('#slideshow img').forEach(img => {
+      img.style.transform = `translate(${-cx}px, ${-cy}px)`;
     });
 
-    rafId = requestAnimationFrame(tick);
+    requestAnimationFrame(tick);
   }
 
-  function init() {
-    window.addEventListener('mousemove', onMouseMove);
-    tick();
-  }
+  function init() { tick(); }
 
   return { init };
 })();
