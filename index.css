@@ -12,17 +12,14 @@ html, body {
 
 #slideshow {
   position: fixed; inset: 0; z-index: 0;
-  perspective: 800px;
 }
 
 #slideshow img {
   position: absolute;
-  top: -3%; left: -3%;
-  width: 106%; height: 106%;
+  top: -4%; left: -4%;
+  width: 108%; height: 108%;
   object-fit: cover;
   object-position: center center;
-  transform: translate(0px, 0px);
-  transition: opacity 1.4s ease-in-out, transform 0.12s ease-out;
   opacity: 0;
   will-change: transform, opacity;
 }
